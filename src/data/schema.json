@@ -19,7 +19,7 @@
   "propertyKeys": [
     {
       "name": "userid",
-      "dataType": "String",
+      "dataType": "Integer",
       "cardinality": "SINGLE"
     },
     {
@@ -74,16 +74,6 @@
     },
     {
       "name": "tel",
-      "dataType": "String",
-      "cardinality": "SINGLE"
-    },
-    {
-      "name": "imageid",
-      "dataType": "String",
-      "cardinality": "SINGLE"
-    },
-    {
-      "name": "thumbnailid",
       "dataType": "String",
       "cardinality": "SINGLE"
     }

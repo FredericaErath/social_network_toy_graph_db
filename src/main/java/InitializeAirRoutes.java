@@ -43,11 +43,11 @@ public class InitializeAirRoutes {
 //         InmemoryLoader();
         try (JanusGraph graph = JanusGraphFactory.build().set("storage.backend", "inmemory").open()) {
             Loader(graph);
-            query(graph, "Jill");
-            query(graph, "Bob");
-            query(graph, "Kate");
-            query(graph, "Jane");
-            query(graph, "Mike");
+            query(graph, 1);
+            query(graph, 2);
+            query(graph, 3);
+            query(graph, 4);
+            query(graph, 5);
         }
 
     }
@@ -67,7 +67,7 @@ public class InitializeAirRoutes {
             System.out.println(e);
         }
         long endTime = System.currentTimeMillis();
-        System.out.println("Sample data loaded, takes: " + (endTime - startTime) + "milliseconds");
+        System.out.println("Sample data loaded, takes: " + (endTime - startTime) + " milliseconds");
         long vertexCount = graph.traversal().V().count().next();
         System.out.println("Total vertices: " + vertexCount);
         long edgeCount = graph.traversal().E().count().next();
@@ -99,6 +99,7 @@ public class InitializeAirRoutes {
 
             // create Property Keys
             for (JsonNode propertyKey : schema.get("propertyKeys")) {
+                // change userid in Integer
                 String name = propertyKey.get("name").asText();
                 String dataType = propertyKey.get("dataType").asText();
                 Cardinality cardinality = Cardinality.valueOf(propertyKey.get("cardinality").asText());
@@ -142,7 +143,7 @@ public class InitializeAirRoutes {
         try {
             JanusGraphTransaction tx = graph.newTransaction();
             Vertex vertex1 = tx.addVertex("member");
-            vertex1.property("userid", "user1");
+            vertex1.property("userid", 1);
             vertex1.property("username", "Bob");
             vertex1.property("pw", "password123");
             vertex1.property("firstname", "Bob");
@@ -158,7 +159,7 @@ public class InitializeAirRoutes {
             vertex1.property("thumbnailid", "thumb1");
 
             Vertex vertex2 = tx.addVertex("member");
-            vertex2.property("userid", "user2");
+            vertex2.property("userid", 2);
             vertex2.property("username", "Jill");
             vertex2.property("pw", "password456");
             vertex2.property("firstname", "Jill");
@@ -174,7 +175,7 @@ public class InitializeAirRoutes {
             vertex2.property("thumbnailid", "thumb2");
 
             Vertex vertex3 = tx.addVertex("member");
-            vertex3.property("userid", "user3");
+            vertex3.property("userid", 3);
             vertex3.property("username", "Kate");
             vertex3.property("pw", "password789");
             vertex3.property("firstname", "Kate");
@@ -190,7 +191,7 @@ public class InitializeAirRoutes {
             vertex3.property("thumbnailid", "thumb3");
 
             Vertex vertex4 = tx.addVertex("member");
-            vertex4.property("userid", "user4");
+            vertex4.property("userid", 4);
             vertex4.property("username", "Jane");
             vertex4.property("pw", "password101");
             vertex4.property("firstname", "Jane");
@@ -206,7 +207,7 @@ public class InitializeAirRoutes {
             vertex4.property("thumbnailid", "thumb4");
 
             Vertex vertex5 = tx.addVertex("member");
-            vertex5.property("userid", "user5");
+            vertex5.property("userid", 5);
             vertex5.property("username", "Mike");
             vertex5.property("pw", "password202");
             vertex5.property("firstname", "Mike");
@@ -230,13 +231,13 @@ public class InitializeAirRoutes {
     public static void loadEdges(JanusGraph graph) {
         try {
             JanusGraphTransaction tx = graph.newTransaction();
-            Map<String, Vertex> vertexCache = new HashMap<>();
-            addVertex(tx, vertexCache, "Bob", "Jill", "friendship");
-            addVertex(tx, vertexCache, "Jill", "Kate", "friendship");
-            addVertex(tx, vertexCache, "Jill", "Mike", "pendingFriendship");
-            addVertex(tx, vertexCache, "Jane", "Kate", "friendship");
-            addVertex(tx, vertexCache, "Mike", "Jane", "friendship");
-            addVertex(tx, vertexCache, "Jane", "Bob", "pendingFriendship");
+            Map<Integer, Vertex> vertexCache = new HashMap<>();
+            addVertex(tx, vertexCache, 1, 2, "friendship");
+            addVertex(tx, vertexCache, 2, 3, "friendship");
+            addVertex(tx, vertexCache, 2, 5, "pendingFriendship");
+            addVertex(tx, vertexCache, 4, 3, "friendship");
+            addVertex(tx, vertexCache, 5, 4, "friendship");
+            addVertex(tx, vertexCache, 4, 1, "pendingFriendship");
             tx.commit();
             System.out.println("Edge Data loaded successfully.");
         } catch (Exception e) {
@@ -244,25 +245,26 @@ public class InitializeAirRoutes {
         }
     }
 
-    private static void addVertex(JanusGraphTransaction tx, Map<String, Vertex> vertexCache, String name1, String name2, String relationship) {
+    private static void addVertex(JanusGraphTransaction tx, Map<Integer, Vertex> vertexCache, Integer name1, Integer name2, String relationship) {
         Vertex fromVertex2 = vertexCache.computeIfAbsent(name1, name ->
-                tx.traversal().V().has("username", name).tryNext().orElse(null)
+                tx.traversal().V().has("userid", name).tryNext().orElse(null)
         );
         Vertex toVertex2 = vertexCache.computeIfAbsent(name2, name ->
-                tx.traversal().V().has("username", name).tryNext().orElse(null)
+                tx.traversal().V().has("userid", name).tryNext().orElse(null)
         );
         if (fromVertex2 != null && toVertex2 != null) {
             fromVertex2.addEdge(relationship, toVertex2);}
     }
 
-    public static void query(Graph graph, String username){
+    public static void query(Graph graph, Integer userid){
         try{
-            List<Object> numFriend = graph.traversal().V().hasLabel("member").has("username", username).inE("friendship").outV().values("username").toList();
-            List<Object> numPendingFriend = graph.traversal().V().hasLabel("member").has("username", username).inE("pendingFriendship").outV().values("username").toList();
-            System.out.println(username + " has friendship:" + numFriend + " count:" + numFriend.size());
-            System.out.println(username + " has pending_friendship:" + numPendingFriend + " count:" + numPendingFriend.size());
+            Long numFriend = graph.traversal().V().hasLabel("member").has("userid", userid).inE("friendship").outV().count().next();
+            Long numPendingFriend = graph.traversal().V().hasLabel("member").has("userid", userid).inE("pendingFriendship").outV().count().next();
+            System.out.println(userid + " has friendship:" + numFriend);
+            System.out.println(userid + " has pending_friendship:" + numPendingFriend);
         }catch (Exception e){
             e.printStackTrace();
+
         }
     }
 
